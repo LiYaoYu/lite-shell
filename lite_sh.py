@@ -101,7 +101,7 @@ class Lite_shell:
 
 
     def __update_history(self, line):
-        self.__history.append(line)
+        self.__history.append(line + '\n')
         with open(self.__log_filename, 'a') as f:
             f.write(line + '\n')
 
