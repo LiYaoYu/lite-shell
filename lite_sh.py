@@ -69,20 +69,20 @@ class Lite_shell:
         return self.__prompt_info + cwd + " " + git_info
 
 
-    def read_input(self):
+    def __read_input(self):
         try:
             return input(self.__prompt)
         except EOFError:
             self.exit_litesh()
 
 
-    def update_history(self, line):
+    def __update_history(self, line):
         self.__history.append(line)
         with open(self.__log_filename, 'a') as f:
             f.write(line + '\n')
 
 
-    def parse_input(self, line):
+    def __parse_input(self, line, is_recursive):
         line = line.strip(' ')
         cmd = re.split(self.__delim, line)
         return cmd
@@ -120,10 +120,10 @@ class Lite_shell:
     def run_shell(self):
         while (True):
             self.__prompt = self.__get_prompt()
-            line = self.read_input()
+            line = self.__read_input()
 
-            self.update_history(line)
-            cmd = self.parse_input(line)
+            self.__update_history(line)
+            cmd = self.__parse_input(line, False)
             self.exec_cmd(cmd)
 
 
