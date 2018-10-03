@@ -26,6 +26,15 @@ class Lite_shell:
             "exit": self.exit_litesh
         }
 
+        self.__color_prefix = {
+            "red": "\033[1;31m",
+            "green": "\033[1;32m",
+            "blue": "\033[1;34m",
+            "cyan": "\033[1;36m",
+            "white": "\033[1;37m",
+            "reset": "\033[0m"
+        }
+
 
     def __set_alias(self, alias):
         res = alias.split('=')
@@ -81,27 +90,28 @@ class Lite_shell:
     def __get_prompt(self, status):
         # USER@HOSTNAME
         if status == 0:
-            prompt_info =  "\033[1;32m" + self.__prompt_info
+            prompt_info =  self.__color_prefix["green"] + self.__prompt_info
         else:
-            prompt_info =  "\033[1;31m" + self.__prompt_info
+            prompt_info =  self.__color_prefix["red"] + self.__prompt_info
 
         # CURRENT_DIRECTORY
         pwd = os.getcwd()
         if pwd == self.__home_dir:
-            cwd = "\033[1;34m" + "~"
+            cwd = self.__color_prefix["cyan"] + "~"
         else:
-            cwd = "\033[1;34m" + os.path.split(pwd)[-1]
+            cwd = self. __color_prefix["cyan"] + os.path.split(pwd)[-1]
 
         # BRANCH_INFORMATION
         branch = self.__get_git_branch_name()
         if branch == "":
             git_info = ""
         else:
-            git_info = "\033[1;37m" + "git:({0}) ".format(branch)
+            git_info = "{0}git:({1}{2}{3}) ".format(self.__color_prefix["blue"],
+                                                    self.__color_prefix["red"],
+                                                    branch,
+                                                    self.__color_prefix["blue"])
 
-        reset_color = "\033[0m"
-
-        return prompt_info + cwd + " " + git_info + reset_color
+        return prompt_info + cwd + " " + git_info + self.__color_prefix["reset"]
 
 
     def __read_input(self):
