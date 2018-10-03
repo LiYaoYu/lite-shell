@@ -45,8 +45,6 @@ class Lite_shell:
                 # strip() due to the uncareful CR/LF in config file
                 self.__set_alias(line[6:].strip())
 
-        print(self.__alias_cmd)
-
 
     def load_history(self):
         try:
@@ -80,17 +78,30 @@ class Lite_shell:
         return cur.strip("*").strip()
 
 
-    def __get_prompt(self):
-        pwd = os.getcwd()
-        
-        if pwd == self.__home_dir:
-            cwd = "~"
+    def __get_prompt(self, status):
+        # USER@HOSTNAME
+        if status == 0:
+            prompt_info =  "\033[1;32m" + self.__prompt_info
         else:
-            cwd = os.path.split(pwd)[-1]
+            prompt_info =  "\033[1;31m" + self.__prompt_info
 
+        # CURRENT_DIRECTORY
+        pwd = os.getcwd()
+        if pwd == self.__home_dir:
+            cwd = "\033[1;34m" + "~"
+        else:
+            cwd = "\033[1;34m" + os.path.split(pwd)[-1]
+
+        # BRANCH_INFORMATION
         branch = self.__get_git_branch_name()
-        git_info = "git:({0}) ".format(branch) if branch != "" else ""
-        return self.__prompt_info + cwd + " " + git_info
+        if branch == "":
+            git_info = ""
+        else:
+            git_info = "\033[1;37m" + "git:({0}) ".format(branch)
+
+        reset_color = "\033[0m"
+
+        return prompt_info + cwd + " " + git_info + reset_color
 
 
     def __read_input(self):
@@ -138,22 +149,26 @@ class Lite_shell:
     def exec_cmd(self, cmd):
         if cmd[0] in self.__built_in_cmd:
             self.__built_in_cmd[cmd[0]](cmd)
-            return
+            return 0 # 0 indicates the success cmd execution
 
         try:
-            out = run(cmd)
+            ret = run(cmd).returncode
         except FileNotFoundError: 
             print("lsh: command {0} not found".format(cmd[0]))
+            ret = -1 # -1 indicates the fail cmd execution
+
+        return ret
 
 
     def run_shell(self):
+        ret = 0 # initial value
         while (True):
-            self.__prompt = self.__get_prompt()
+            self.__prompt = self.__get_prompt(ret)
             line = self.__read_input()
 
             self.__update_history(line)
             cmd = self.__parse_input(line, False)
-            self.exec_cmd(cmd)
+            ret = self.exec_cmd(cmd)
 
 
 
