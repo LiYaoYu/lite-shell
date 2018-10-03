@@ -11,26 +11,30 @@ class Lite_shell:
     def __init__(self):
         self.__home_dir = os.environ["HOME"] 
         self.__log_filename = self.__home_dir + "/" + ".lsh_history"
-        self.__history = self.__load_history()
         
         self.__prompt_info = self.__set_prompt_info()
         self.__delim = "\t|\r|\n|\a| " # used in re format
 
-        self.__built_in_cmd = {"cd": self.change_dir,
-                               "history": self.show_history,
-                               "exit": self.exit_litesh}
-        
-    def __load_history(self):
+        self.__history = []
+
+        self.__built_in_cmd = {
+            "cd": self.change_dir,
+            "history": self.show_history,
+            "exit": self.exit_litesh
+        }
+
+
+    def load_history(self):
         try:
             f = open(self.__log_filename, 'r')
             lines = f.readlines()
             f.close()
-            return lines
+            self.__history = lines
 
         except FileNotFoundError:
             f = open(self.__log_filename, 'x')
             f.close()
-            return []
+            return
 
 
     def __set_prompt_info(self):
@@ -126,6 +130,8 @@ class Lite_shell:
 
 def main():
     sh = Lite_shell()
+
+    sh.load_history()
 
     sh.run_shell()
 
