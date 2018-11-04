@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-import termios
 
 from enum import Enum
 from subprocess import run
@@ -25,11 +24,10 @@ class Keys(StrEnum):
 
 
 class InputHandler():
-    def __init__(self, tty_attr):
+    def __init__(self):
         globals().update(Keys.__members__)
 
         self.prefix = ""
-        self.tty_attr = tty_attr
 
         self.event_keys = {
             KEY_UP: self.get_prev_cmd_with_prefix,
@@ -100,7 +98,6 @@ class InputHandler():
 
 
     def get_char(self):
-        # TODO
         c = sys.stdin.read(1)
         for k in self.event_keys:
             if c in k and c not in self.event_keys:
@@ -114,7 +111,6 @@ class InputHandler():
         cmd = ""
         while c != '\n':
             c = self.get_char()
-            # termios.tcsetattr(fd, termios.TCSADRAIN, self.tty_attr)
 
             if c in self.event_keys: # handle event keys with single char
                 cmd = self.event_keys[c]()

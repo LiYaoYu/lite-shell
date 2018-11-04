@@ -15,7 +15,7 @@ class CmdParser:
 
 
     def parse_input(self, line, is_recursive):
-        # TODO: consider "", '', (), [], {}
+        # TODO: consider "", '', (), [], {} and pipe |
         line = line.strip(' ')
         cmd = re.split(self.delim, line)
 

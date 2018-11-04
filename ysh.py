@@ -3,7 +3,6 @@
 import os
 import sys
 import tty
-import termios
 from subprocess import *
 
 from ysh_input import InputHandler
@@ -18,8 +17,6 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
         self.log_fname = self.home_dir + "/" + ".ysh_history"
 
         self.stdin_fd = sys.stdin.fileno()
-        self.tty_attr = termios.tcgetattr(self.stdin_fd)
-
         self.history = []
 
         self.built_in_cmd = {
@@ -28,7 +25,7 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
             "exit": self.exit_litesh
         }
 
-        InputHandler.__init__(self, self.tty_attr)
+        InputHandler.__init__(self)
         CmdParser.__init__(self)
         LayoutHandler.__init__(self, self.home_dir)
 

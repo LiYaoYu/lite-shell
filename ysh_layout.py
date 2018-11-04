@@ -68,7 +68,7 @@ class LayoutHandler:
 
 
     def show_prompt(self, prompt):
-            print(prompt, end = "")
+            sys.stdout.write(prompt)
             sys.stdout.flush()
 
 
