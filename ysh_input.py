@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
 
 import sys
+import termios
+import curses
+import curses.ascii
 
-from enum import Enum
+from enum import IntEnum
 from subprocess import run
 
-class StrEnum(str, Enum):
-    pass
 
-class Keys(StrEnum):
-    KEY_UP = "\x1b[A"
-    KEY_DOWN = "\x1b[B"
-    KEY_RIGHT = "\x1b[C"
-    KEY_LEFT = "\x1b[D"
+class Keys(IntEnum):
+    KEY_UP = curses.KEY_UP
+    KEY_DOWN = curses.KEY_DOWN
+    KEY_LEFT = curses.KEY_LEFT
+    KEY_RIGHT = curses.KEY_RIGHT
 
-    KEY_DELETE = "\x1b[3"
-    KEY_BACKSPACE = "\x7f"
+    KEY_BACKSPACE = curses.KEY_BACKSPACE
+    KEY_DELETE = curses.ascii.DEL
+    KEY_ENTER = curses.ascii.NL
+    KEY_TAB = curses.ascii.TAB
 
-    KEY_TAB = "\t"
-    KEY_CTRL_L = "\x0c" # <Ctrl> L
-    KEY_CTRL_D = "\x04" # <Ctrl> D
+    KEY_CTRL_L = ord(curses.ascii.ctrl('L'))
+    KEY_CTRL_D = ord(curses.ascii.ctrl('D'))
 
 
 
 class InputHandler():
-    def __init__(self):
+    def __init__(self, stdscr, tty_addr):
         globals().update(Keys.__members__)
 
-        self.prefix = ""
+        self.prefix = str()
+        self.stdscr = stdscr
+        self.tty_addr = tty_addr
 
         self.event_keys = {
             KEY_UP: self.get_prev_cmd_with_prefix,
@@ -89,37 +93,32 @@ class InputHandler():
 
 
     def clear_screen(self):
-        run("clear")
-        return ""
+        self.prefix = "clear"
+        return True
 
 
     def catch_EOF(self):
-        sys.exit()
-
-
-    def get_char(self):
-        c = sys.stdin.read(1)
-        for k in self.event_keys:
-            if c in k and c not in self.event_keys:
-                c += sys.stdin.read(1)
-                continue
-        return c
+        self.prefix += "exit"
+        return True
 
 
     def get_input(self, fd, history):
-        c = ""
-        cmd = ""
-        while c != '\n':
-            c = self.get_char()
+        c = None
+        self.prefix = ""
+        is_emergency_event = False
+        while True:
+            c = self.stdscr.getch()
+            termios.tcsetattr(self.stdin_fd, termios.TCSANOW, self.tty_addr)
 
-            if c in self.event_keys: # handle event keys with single char
-                cmd = self.event_keys[c]()
+            if c in self.event_keys:
+                is_emergency_event = self.event_keys[c]()
             else:
-                sys.stdout.write(c)
-                sys.stdout.flush()
-                cmd += c
+                self.prefix += chr(c)
 
-        return cmd.strip()
+            if c == KEY_ENTER or is_emergency_event == True:
+                break
+
+        return self.prefix.strip()
 
 
 def test():

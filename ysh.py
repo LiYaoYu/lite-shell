@@ -2,7 +2,8 @@
 
 import os
 import sys
-import tty
+import termios
+import curses
 from subprocess import *
 
 from ysh_input import InputHandler
@@ -11,13 +12,18 @@ from ysh_layout import LayoutHandler
 
 class Ysh(InputHandler, CmdParser, LayoutHandler):
     def __init__(self):
+        # record original termial settings for restore in exiting
+        self.orig_tty_addr = termios.tcgetattr(sys.stdin.fileno())
+
         self.home_dir = os.environ["HOME"]
 
         self.conf_fname = self.home_dir + "/" + ".y_shell.config"
         self.log_fname = self.home_dir + "/" + ".ysh_history"
 
         self.stdin_fd = sys.stdin.fileno()
-        self.history = []
+        self.stdscr = None
+        self.tty_addr = None
+        self.history = None
 
         self.built_in_cmd = {
             "cd": self.change_dir,
@@ -25,7 +31,7 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
             "exit": self.exit_litesh
         }
 
-        InputHandler.__init__(self)
+        InputHandler.__init__(self, self.stdscr, self.tty_addr)
         CmdParser.__init__(self)
         LayoutHandler.__init__(self, self.home_dir)
 
@@ -57,7 +63,16 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
 
 
     def init_terminal(self):
-        tty.setcbreak(self.stdin_fd)
+        self.stdscr = curses.initscr()
+        self.stdscr.keypad(True)
+
+        curses.cbreak()
+        curses.echo()
+
+        self.tty_addr = termios.tcgetattr(self.stdin_fd)
+        self.tty_addr[0] |= termios.ICRNL
+        self.tty_addr[1] |= termios.ONLCR
+        termios.tcsetattr(self.stdin_fd, termios.TCSANOW, self.tty_addr)
 
 
     def update_history(self, line):
@@ -81,6 +96,8 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
 
 
     def exit_litesh(self, cmd):
+        curses.endwin()
+        termios.tcsetattr(self.stdin_fd, termios.TCSANOW, self.orig_tty_addr)
         sys.exit()
 
 
