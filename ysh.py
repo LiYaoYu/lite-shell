@@ -90,7 +90,10 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
         else:
             path = cmd[1]
 
-        os.chdir(path)
+        try:
+            os.chdir(path)
+        except FileNotFoundError:
+            sys.stdout.write("No such file or directory: \'{0}\'\n".format(path))
 
 
     def show_history(self, cmd):
