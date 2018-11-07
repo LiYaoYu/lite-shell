@@ -2,6 +2,7 @@
 
 import os
 import sys
+import tty
 import termios
 import curses
 from subprocess import *
@@ -63,15 +64,17 @@ class Ysh(InputHandler, CmdParser, LayoutHandler):
 
 
     def init_terminal(self):
+        # curses is needed for some of the window operations
         self.stdscr = curses.initscr()
         self.stdscr.keypad(True)
+        curses.noecho()
 
-        curses.cbreak()
-        curses.echo()
+        # TODO: set the tty_attr
 
         self.tty_addr = termios.tcgetattr(self.stdin_fd)
         self.tty_addr[0] |= termios.ICRNL
         self.tty_addr[1] |= termios.ONLCR
+        self.tty_addr[3] |= termios.ECHO
         termios.tcsetattr(self.stdin_fd, termios.TCSANOW, self.tty_addr)
 
 

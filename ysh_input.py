@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import tty
 import termios
 import curses
 import curses.ascii
@@ -107,6 +108,7 @@ class InputHandler():
         self.prefix = ""
         is_emergency_event = False
         while True:
+            tty.setraw(fd)
             c = self.stdscr.getch()
             termios.tcsetattr(self.stdin_fd, termios.TCSANOW, self.tty_addr)
 
@@ -114,6 +116,8 @@ class InputHandler():
                 is_emergency_event = self.event_keys[c]()
             else:
                 self.prefix += chr(c)
+                sys.stdout.write(chr(c))
+                sys.stdout.flush()
 
             if c == KEY_ENTER or is_emergency_event == True:
                 break
